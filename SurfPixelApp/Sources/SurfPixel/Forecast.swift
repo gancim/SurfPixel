@@ -34,6 +34,13 @@ enum Forecast {
         let hourly: Hourly
     }
 
+    // never serve cached responses; forecasts must be fetched fresh
+    private static let session: URLSession = {
+        let cfg = URLSessionConfiguration.ephemeral
+        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: cfg)
+    }()
+
     static func fetch(config: Config) async throws -> Conditions {
         var weatherURL = URLComponents(string: "https://api.open-meteo.com/v1/forecast")!
         weatherURL.queryItems = [
@@ -53,13 +60,18 @@ enum Forecast {
         ]
 
         let wURL = weatherURL.url!, mURL = marineURL.url!
-        async let weatherData = URLSession.shared.data(from: wURL).0
-        async let marineData = URLSession.shared.data(from: mURL).0
+        async let weatherData = session.data(from: wURL).0
+        async let marineData = session.data(from: mURL).0
         let weather = try JSONDecoder().decode(WeatherResponse.self, from: await weatherData).current
         let marine = try JSONDecoder().decode(MarineResponse.self, from: await marineData).hourly
 
         // index of the current hour in the marine hourly series
         let fmt = DateFormatter()
+        // POSIX locale + Gregorian: without these, a system set to a
+        // non-Gregorian calendar produces a key that never matches the API's
+        // timestamps, silently falling back to index 0 (midnight data)
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.calendar = Calendar(identifier: .gregorian)
         fmt.dateFormat = "yyyy-MM-dd'T'HH:00"
         fmt.timeZone = TimeZone(identifier: config.location.timezone)
         let idx = marine.time.firstIndex(of: fmt.string(from: Date())) ?? 0
