@@ -113,3 +113,7 @@ the idotmatrix library) and Pillow.
   by @derkalle4 and contributors — the reverse-engineered protocol
 - [Open-Meteo](https://open-meteo.com) — excellent free weather and marine
   forecast APIs
+
+## License
+
+[MIT](LICENSE)
