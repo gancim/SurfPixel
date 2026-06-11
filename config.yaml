@@ -1,0 +1,32 @@
+# surfpixel configuration
+location:
+  name: "Chisan (Hamasuka, Chigasaki)"
+  # Point used for air temperature / weather / wind
+  weather: { lat: 35.326, lon: 139.418 }
+  # Point used for waves / tide (must be over water for the marine model)
+  surf: { lat: 35.30, lon: 139.42 }
+  timezone: "Asia/Tokyo"
+
+display:
+  brightness: 80          # 5-100
+  refresh_minutes: 10     # how often to refetch + redraw
+  device_address: null    # null = auto-discover; or paste address from --scan
+
+thresholds:
+  good_period_seconds: 8  # period >= this renders green, below it red
+
+# All colors are hex. Tweak freely.
+colors:
+  temp: "#ffb000"         # temperature text
+  wind: "#9aa7b0"         # wind speed (m/s) top-right
+  wave: "#00c8ff"         # big wave height
+  wave_unit: "#0077a8"    # the small "m"
+  period_good: "#00ff66"  # swell period line when period is good
+  period_bad: "#ff5050"   # swell period line when period is poor
+  arrow: "#00c8ff"        # wave direction arrow
+  tide: "#00e08c"         # tide curve
+  tide_fill: "#00482c"    # area under tide curve
+  tide_now: "#ffffff"     # marker for "now" on the curve
+  rising: "#00ff66"       # tide rising arrow
+  falling: "#ff5050"      # tide falling arrow
+  separator: "#1c1c28"    # thin divider lines

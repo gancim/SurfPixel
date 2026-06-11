@@ -1,0 +1,4 @@
+idotmatrix==0.0.9
+pillow
+requests
+pyyaml

@@ -1,0 +1,15 @@
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# swift
+SurfPixelApp/.build/
+SurfPixelApp/dist/
+
+# generated previews (committed copies live in assets/)
+preview.png
+preview_big.png
+
+.DS_Store
+.claude/
