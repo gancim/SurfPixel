@@ -17,6 +17,12 @@ enum Forecast {
         struct Current: Codable {
             let temperature_2m: Double
             let weather_code: Int
+        }
+        let current: Current
+    }
+
+    struct WindResponse: Codable {
+        struct Current: Codable {
             let wind_speed_10m: Double
             let wind_direction_10m: Double
         }
@@ -41,12 +47,65 @@ enum Forecast {
         return URLSession(configuration: cfg)
     }()
 
+    /// Fetch with retries. Each round tries URLSession, then `curl --http1.1`:
+    /// some VPN middleboxes abort TLS handshakes that offer HTTP/2 in ALPN
+    /// (which URLSession always does and cannot be told not to), and the
+    /// interference can be intermittent, so back off and try again.
+    private static func fetchData(_ url: URL, rounds: Int = 3) async throws -> Data {
+        var lastError: Error = URLError(.cannotLoadFromNetwork)
+        for round in 0..<rounds {
+            if round > 0 {
+                try await Task.sleep(nanoseconds: UInt64(round) * 3_000_000_000)
+            }
+            do {
+                return try await session.data(from: url).0
+            } catch {
+                lastError = error
+                log.warning("URLSession failed round \(round) (\(error.localizedDescription)), trying HTTP/1.1")
+            }
+            do {
+                return try await curlHTTP1(url)
+            } catch {
+                lastError = error
+                log.warning("curl HTTP/1.1 failed round \(round)")
+            }
+        }
+        throw lastError
+    }
+
+    private static func curlHTTP1(_ url: URL) async throws -> Data {
+        try await Task.detached {
+            let proc = Process()
+            proc.executableURL = URL(fileURLWithPath: "/usr/bin/curl")
+            proc.arguments = ["--http1.1", "-fsS", "--max-time", "20", url.absoluteString]
+            let pipe = Pipe()
+            proc.standardOutput = pipe
+            proc.standardError = FileHandle.nullDevice
+            try proc.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            proc.waitUntilExit()
+            guard proc.terminationStatus == 0, !data.isEmpty else {
+                throw URLError(.cannotLoadFromNetwork)
+            }
+            return data
+        }.value
+    }
+
     static func fetch(config: Config) async throws -> Conditions {
         var weatherURL = URLComponents(string: "https://api.open-meteo.com/v1/forecast")!
         weatherURL.queryItems = [
             .init(name: "latitude", value: String(config.location.weather.lat)),
             .init(name: "longitude", value: String(config.location.weather.lon)),
-            .init(name: "current", value: "temperature_2m,weather_code,wind_speed_10m,wind_direction_10m"),
+            .init(name: "current", value: "temperature_2m,weather_code"),
+            .init(name: "timezone", value: config.location.timezone),
+        ]
+        // wind comes from the surf point: the weather point's grid cell is
+        // inland, where land friction underreports the wind at the lineup
+        var windURL = URLComponents(string: "https://api.open-meteo.com/v1/forecast")!
+        windURL.queryItems = [
+            .init(name: "latitude", value: String(config.location.surf.lat)),
+            .init(name: "longitude", value: String(config.location.surf.lon)),
+            .init(name: "current", value: "wind_speed_10m,wind_direction_10m"),
             .init(name: "wind_speed_unit", value: "ms"),
             .init(name: "timezone", value: config.location.timezone),
         ]
@@ -59,10 +118,12 @@ enum Forecast {
             .init(name: "timezone", value: config.location.timezone),
         ]
 
-        let wURL = weatherURL.url!, mURL = marineURL.url!
-        async let weatherData = session.data(from: wURL).0
-        async let marineData = session.data(from: mURL).0
+        let wURL = weatherURL.url!, dURL = windURL.url!, mURL = marineURL.url!
+        async let weatherData = fetchData(wURL)
+        async let windData = fetchData(dURL)
+        async let marineData = fetchData(mURL)
         let weather = try JSONDecoder().decode(WeatherResponse.self, from: await weatherData).current
+        let wind = try JSONDecoder().decode(WindResponse.self, from: await windData).current
         let marine = try JSONDecoder().decode(MarineResponse.self, from: await marineData).hourly
 
         // index of the current hour in the marine hourly series
@@ -84,8 +145,8 @@ enum Forecast {
         return Conditions(
             temperature: weather.temperature_2m,
             weatherCode: weather.weather_code,
-            windSpeed: weather.wind_speed_10m,
-            windDirection: weather.wind_direction_10m,
+            windSpeed: wind.wind_speed_10m,
+            windDirection: wind.wind_direction_10m,
             waveHeight: marine.wave_height[idx] ?? 0,
             wavePeriod: marine.wave_period[idx] ?? 0,
             waveDirection: marine.wave_direction[idx] ?? 0,

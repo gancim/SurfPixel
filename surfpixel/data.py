@@ -37,14 +37,29 @@ def fetch(cfg: dict) -> Conditions:
         params={
             "latitude": loc["weather"]["lat"],
             "longitude": loc["weather"]["lon"],
-            "current": "temperature_2m,weather_code,wind_speed_10m,wind_direction_10m",
-            "wind_speed_unit": "ms",
+            "current": "temperature_2m,weather_code",
             "timezone": loc["timezone"],
         },
         timeout=15,
     )
     weather.raise_for_status()
     cur = weather.json()["current"]
+
+    # wind comes from the surf point: the weather point's grid cell is
+    # inland, where land friction underreports the wind at the lineup
+    wind = requests.get(
+        WEATHER_URL,
+        params={
+            "latitude": loc["surf"]["lat"],
+            "longitude": loc["surf"]["lon"],
+            "current": "wind_speed_10m,wind_direction_10m",
+            "wind_speed_unit": "ms",
+            "timezone": loc["timezone"],
+        },
+        timeout=15,
+    )
+    wind.raise_for_status()
+    wind_cur = wind.json()["current"]
 
     marine = requests.get(
         MARINE_URL,
@@ -75,8 +90,8 @@ def fetch(cfg: dict) -> Conditions:
     return Conditions(
         temperature=cur["temperature_2m"],
         weather_code=cur["weather_code"],
-        wind_speed=cur["wind_speed_10m"],
-        wind_direction=cur["wind_direction_10m"],
+        wind_speed=wind_cur["wind_speed_10m"],
+        wind_direction=wind_cur["wind_direction_10m"],
         wave_height=hourly["wave_height"][idx] or 0.0,
         wave_period=hourly["wave_period"][idx] or 0.0,
         wave_direction=hourly["wave_direction"][idx] or 0.0,
