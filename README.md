@@ -39,7 +39,7 @@ corner.
 | Weather strip | 0–4 | condition icon, air temperature °C, wind speed (m/s) + direction arrow |
 | Wave height | 8–14 | significant wave height in meters, big — plus the swell's travel-direction arrow |
 | Swell period | 16–20 | `~` glyph + period in seconds — **green** when ≥ your "good" threshold (default 8 s), **red** when it's short wind chop |
-| Tide | 22–31 | sea level curve, 1 pixel per hour (3 h back → 28 h ahead), white dot = now, ↑/↓ = rising or falling |
+| Tide | 22–31 | sea level curve, 1 pixel per hour (3 h back → 28 h ahead), white dotted line = now, green ▲ / red ▼ = rising or falling |
 
 Forecast data comes from [Open-Meteo](https://open-meteo.com)'s weather and
 marine APIs — free, no API key.

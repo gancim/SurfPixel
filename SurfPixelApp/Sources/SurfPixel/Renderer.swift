@@ -224,18 +224,22 @@ enum Renderer {
             }
             c.set(x, y, col("tide"))
         }
-        // "now" marker
+        // "now" marker: dotted white line from the bottom edge up to the curve
         let nx = min(cond.tideNowIndex, levels.count - 1)
         let ny = curveY(nx)
+        var my = bottom
+        while my > ny {
+            c.set(nx, my, col("tide_now"))
+            my -= 2
+        }
         c.set(nx, ny, col("tide_now"))
-        if ny > top { c.set(nx, ny - 1, col("tide_now")) }
-        // rising/falling arrow, top-right of the tide band
+        // tide trend triangle, top-right of the band: ▲ rising / ▼ falling
         let i = cond.tideNowIndex
         let rising = i + 1 < levels.count && levels[i + 1] >= levels[i]
         if rising {
-            drawGlyph(c, size - 3, top + 1, ["010", "111", "010", "010"], col("rising"))
+            drawGlyph(c, size - 5, top + 1, ["00100", "01110", "11111"], col("rising"))
         } else {
-            drawGlyph(c, size - 3, top + 1, ["010", "010", "111", "010"], col("falling"))
+            drawGlyph(c, size - 5, top + 1, ["11111", "01110", "00100"], col("falling"))
         }
 
         return c

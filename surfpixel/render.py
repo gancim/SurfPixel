@@ -168,19 +168,18 @@ def render(cond: Conditions, colors: dict, good_period_seconds: float = 8.0) -> 
         for fy in range(y + 1, bottom + 1):
             px[x, fy] = c["tide_fill"]
         px[x, y] = c["tide"]
-    # "now" marker
+    # "now" marker: dotted white line from the bottom edge up to the curve
     nx = min(cond.tide_now_index, len(levels) - 1)
     ny = bottom - round((levels[nx] - lo) / span * (bottom - top))
+    for my in range(bottom, ny, -2):
+        px[nx, my] = c["tide_now"]
     px[nx, ny] = c["tide_now"]
-    if ny > top:
-        px[nx, ny - 1] = c["tide_now"]
-    # rising/falling arrow, top-right of the tide band
+    # tide trend triangle, top-right of the band: rising / falling
     i = cond.tide_now_index
     rising = i + 1 < len(levels) and levels[i + 1] >= levels[i]
-    ax, ay = SIZE - 3, top + 1
     if rising:
-        draw_glyph(px, ax, ay, ["010", "111", "010", "010"], c["rising"])
+        draw_glyph(px, SIZE - 5, top + 1, ["00100", "01110", "11111"], c["rising"])
     else:
-        draw_glyph(px, ax, ay, ["010", "010", "111", "010"], c["falling"])
+        draw_glyph(px, SIZE - 5, top + 1, ["11111", "01110", "00100"], c["falling"])
 
     return img
