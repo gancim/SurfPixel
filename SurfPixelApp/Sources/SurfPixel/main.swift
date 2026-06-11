@@ -83,6 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             do {
                 let cond = try await Forecast.fetch(config: cfg)
+                log.info("fetched: \(cond.temperature)°C wind \(cond.windSpeed)m/s wave \(cond.waveHeight)m @ \(cond.wavePeriod)s tideIdx \(cond.tideNowIndex)")
                 let png = Renderer.render(cond, colors: cfg.colors, goodPeriodSeconds: cfg.display.goodPeriodSeconds ?? 8).pngData()
                 matrix.namePrefix = cfg.display.deviceNamePrefix
                 matrix.push(frame: png, brightness: cfg.display.brightness)
@@ -90,6 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     format: "%@\n%.0f°C · wave %.1fm @ %.1fs",
                     cfg.location.name, cond.temperature, cond.waveHeight, cond.wavePeriod)
             } catch {
+                log.error("forecast fetch failed: \(error.localizedDescription)")
                 statusLine.title = "forecast fetch failed · \(timeFmt.string(from: Date()))"
             }
             schedule(minutes: cfg.display.refreshMinutes)

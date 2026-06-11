@@ -1,5 +1,8 @@
 import CoreBluetooth
 import Foundation
+import os
+
+let log = Logger(subsystem: "com.gancim.surfpixel", category: "app")
 
 /// Talks to an iDotMatrix display over Bluetooth LE.
 ///
@@ -37,6 +40,7 @@ final class MatrixDevice: NSObject {
             Data([5, 0, 4, 1, 1]),
             Self.imagePayload(png),
         ]
+        log.info("push requested: frame \(png.count) bytes, brightness \(level)")
         deliver()
     }
 
@@ -65,10 +69,12 @@ final class MatrixDevice: NSObject {
     private func deliver() {
         guard !pendingMessages.isEmpty else { return }
         guard central.state == .poweredOn else {
+            log.warning("cannot deliver: bluetooth state \(self.central.state.rawValue)")
             onStatus?(statusText(for: central.state))
             return
         }
         if let p = peripheral, p.state == .connected, writeChar != nil {
+            log.info("device already connected, sending")
             enqueueAndPump()
             return
         }
@@ -80,9 +86,11 @@ final class MatrixDevice: NSObject {
             peripheral = known
         }
         if let p = peripheral {
+            log.info("connecting to known peripheral \(p.identifier)")
             onStatus?("connecting…")
             central.connect(p)
         } else {
+            log.info("no known peripheral, scanning")
             onStatus?("scanning…")
             central.scanForPeripherals(withServices: nil)
         }
@@ -108,6 +116,7 @@ final class MatrixDevice: NSObject {
             p.writeValue(sendQueue.removeFirst(), for: ch, type: .withoutResponse)
         }
         if sendQueue.isEmpty {
+            log.info("frame fully written to device")
             onStatus?("updated")
         }
     }
@@ -157,6 +166,7 @@ extension MatrixDevice: CBCentralManagerDelegate, CBPeripheralDelegate {
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral,
                         error: Error?) {
+        log.info("device disconnected: \(error?.localizedDescription ?? "clean")")
         writeChar = nil
         sendQueue = []
     }
