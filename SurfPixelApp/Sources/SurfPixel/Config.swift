@@ -14,6 +14,8 @@ struct Config: Codable {
         var deviceNamePrefix: String
         // period >= this many seconds renders green, below it red
         var goodPeriodSeconds: Double?
+        // "ms" | "kn" | "kmh" | "mph" — unit for the displayed wind speed
+        var windUnit: String?
     }
 
     var location: Location
@@ -28,7 +30,7 @@ struct Config: Codable {
             timezone: "Asia/Tokyo"
         ),
         display: .init(brightness: 80, refreshMinutes: 10, deviceNamePrefix: "IDM-",
-                       goodPeriodSeconds: 8),
+                       goodPeriodSeconds: 8, windUnit: "ms"),
         colors: [
             "temp": "#ffb000",
             "wind": "#9aa7b0",

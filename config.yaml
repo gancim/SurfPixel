@@ -11,6 +11,7 @@ display:
   brightness: 80          # 5-100
   refresh_minutes: 10     # how often to refetch + redraw
   device_address: null    # null = auto-discover; or paste address from --scan
+  wind_unit: ms           # ms | kn | kmh | mph
 
 thresholds:
   good_period_seconds: 8  # period >= this renders green, below it red

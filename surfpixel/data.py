@@ -47,13 +47,16 @@ def fetch(cfg: dict) -> Conditions:
 
     # wind comes from the surf point: the weather point's grid cell is
     # inland, where land friction underreports the wind at the lineup
+    wind_unit = cfg.get("display", {}).get("wind_unit", "ms")
+    if wind_unit not in ("ms", "kn", "kmh", "mph"):
+        wind_unit = "ms"
     wind = requests.get(
         WEATHER_URL,
         params={
             "latitude": loc["surf"]["lat"],
             "longitude": loc["surf"]["lon"],
             "current": "wind_speed_10m,wind_direction_10m",
-            "wind_speed_unit": "ms",
+            "wind_speed_unit": wind_unit,
             "timezone": loc["timezone"],
         },
         timeout=15,

@@ -101,12 +101,14 @@ enum Forecast {
         ]
         // wind comes from the surf point: the weather point's grid cell is
         // inland, where land friction underreports the wind at the lineup
+        let windUnit = ["ms", "kn", "kmh", "mph"].contains(config.display.windUnit ?? "")
+            ? config.display.windUnit! : "ms"
         var windURL = URLComponents(string: "https://api.open-meteo.com/v1/forecast")!
         windURL.queryItems = [
             .init(name: "latitude", value: String(config.location.surf.lat)),
             .init(name: "longitude", value: String(config.location.surf.lon)),
             .init(name: "current", value: "wind_speed_10m,wind_direction_10m"),
-            .init(name: "wind_speed_unit", value: "ms"),
+            .init(name: "wind_speed_unit", value: windUnit),
             .init(name: "timezone", value: config.location.timezone),
         ]
         var marineURL = URLComponents(string: "https://marine-api.open-meteo.com/v1/marine")!

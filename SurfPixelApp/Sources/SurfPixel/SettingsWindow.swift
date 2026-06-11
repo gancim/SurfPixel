@@ -11,6 +11,10 @@ final class SettingsWindowController: NSWindowController {
     private let timezoneField = NSTextField()
     private let refreshField = NSTextField()
     private let goodPeriodField = NSTextField()
+    private let windUnitPopup = NSPopUpButton()
+    private static let windUnits: [(code: String, label: String)] = [
+        ("ms", "m/s"), ("kn", "knots"), ("kmh", "km/h"), ("mph", "mph"),
+    ]
     private let brightnessSlider = NSSlider(value: 80, minValue: 5, maxValue: 100,
                                             target: nil, action: nil)
 
@@ -73,6 +77,7 @@ final class SettingsWindowController: NSWindowController {
             [label("Timezone:"), timezoneField],
             [label("Refresh (minutes):"), refreshField],
             [label("Good period ≥ (s):"), goodPeriodField],
+            [label("Wind unit:"), windUnitPopup],
             [label("Brightness:"), brightnessSlider],
         ])
         fieldsGrid.rowSpacing = 8
@@ -103,6 +108,8 @@ final class SettingsWindowController: NSWindowController {
         colorsGrid.columnSpacing = 10
         colorsGrid.column(at: 0).xPlacement = .trailing
         colorsGrid.column(at: 2).xPlacement = .trailing
+
+        windUnitPopup.addItems(withTitles: Self.windUnits.map(\.label))
 
         let save = NSButton(title: "Save & Update", target: self, action: #selector(save(_:)))
         save.keyEquivalent = "\r"
@@ -158,6 +165,8 @@ final class SettingsWindowController: NSWindowController {
         timezoneField.stringValue = cfg.location.timezone
         refreshField.stringValue = String(cfg.display.refreshMinutes)
         goodPeriodField.stringValue = String(cfg.display.goodPeriodSeconds ?? 8)
+        let unitIndex = Self.windUnits.firstIndex { $0.code == cfg.display.windUnit } ?? 0
+        windUnitPopup.selectItem(at: unitIndex)
         brightnessSlider.integerValue = cfg.display.brightness
         for (key, _) in Self.colorFields {
             let hex = cfg.colors[key] ?? Config.defaults.colors[key] ?? "#ffffff"
@@ -178,6 +187,7 @@ final class SettingsWindowController: NSWindowController {
         cfg.display.refreshMinutes = max(1, Int(refreshField.stringValue) ?? cfg.display.refreshMinutes)
         cfg.display.goodPeriodSeconds = Double(goodPeriodField.stringValue)
             ?? cfg.display.goodPeriodSeconds ?? 8
+        cfg.display.windUnit = Self.windUnits[windUnitPopup.indexOfSelectedItem].code
         cfg.display.brightness = brightnessSlider.integerValue
         for (key, _) in Self.colorFields {
             if let well = colorWells[key] { cfg.colors[key] = hexString(well.color) }
