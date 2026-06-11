@@ -49,6 +49,13 @@ marine APIs — free, no API key.
 A native Swift app — no Python, no terminal. It lives in the menu bar as a
 small wave icon and keeps the display updated in the background.
 
+**[⬇ Download the latest release](https://github.com/gancim/SurfPixel/releases/latest)**
+(universal binary, macOS 13+). The app isn't notarized, so on first launch
+right-click → Open, or run
+`xattr -d com.apple.quarantine /Applications/SurfPixel.app`.
+
+Or build it yourself:
+
 ```bash
 cd SurfPixelApp
 ./build_app.sh
