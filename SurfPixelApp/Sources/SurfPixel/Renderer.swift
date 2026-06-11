@@ -207,6 +207,15 @@ enum Renderer {
             ?? (good ? "#00ff66" : "#ff5050"))
         drawGlyph(c, 0, 16, wavesGlyph, periodColor)
         drawText(c, 7, 16, String(format: "%.1fs", cond.wavePeriod), periodColor)
+        // tide trend triangle at the right end of the period line
+        let lv = cond.tideLevels
+        let i = cond.tideNowIndex
+        let rising = i + 1 < lv.count && lv[i + 1] >= lv[i]
+        if rising {
+            drawGlyph(c, size - 5, 17, ["00100", "01110", "11111"], col("rising"))
+        } else {
+            drawGlyph(c, size - 5, 17, ["11111", "01110", "00100"], col("falling"))
+        }
 
         // --- tide curve (rows 22-31), one column per hour -------------------
         let top = 22, bottom = 31
@@ -233,14 +242,6 @@ enum Renderer {
             my -= 2
         }
         c.set(nx, ny, col("tide_now"))
-        // tide trend triangle, top-right of the band: ▲ rising / ▼ falling
-        let i = cond.tideNowIndex
-        let rising = i + 1 < levels.count && levels[i + 1] >= levels[i]
-        if rising {
-            drawGlyph(c, size - 5, top + 1, ["00100", "01110", "11111"], col("rising"))
-        } else {
-            drawGlyph(c, size - 5, top + 1, ["11111", "01110", "00100"], col("falling"))
-        }
 
         return c
     }

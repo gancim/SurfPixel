@@ -157,6 +157,14 @@ def render(cond: Conditions, colors: dict, good_period_seconds: float = 8.0) -> 
                          hex_to_rgb("#00ff66" if good else "#ff5050"))
     draw_glyph(px, 0, 16, WAVES, period_color)
     draw_text(px, 7, 16, f"{cond.wave_period:.1f}s", period_color)
+    # tide trend triangle at the right end of the period line
+    lv = cond.tide_levels
+    i = cond.tide_now_index
+    rising = i + 1 < len(lv) and lv[i + 1] >= lv[i]
+    if rising:
+        draw_glyph(px, SIZE - 5, 17, ["00100", "01110", "11111"], c["rising"])
+    else:
+        draw_glyph(px, SIZE - 5, 17, ["11111", "01110", "00100"], c["falling"])
 
     # --- tide curve (rows 22-31), one column per hour -----------------------
     top, bottom = 22, 31
@@ -174,12 +182,5 @@ def render(cond: Conditions, colors: dict, good_period_seconds: float = 8.0) -> 
     for my in range(bottom, ny, -2):
         px[nx, my] = c["tide_now"]
     px[nx, ny] = c["tide_now"]
-    # tide trend triangle, top-right of the band: rising / falling
-    i = cond.tide_now_index
-    rising = i + 1 < len(levels) and levels[i + 1] >= levels[i]
-    if rising:
-        draw_glyph(px, SIZE - 5, top + 1, ["00100", "01110", "11111"], c["rising"])
-    else:
-        draw_glyph(px, SIZE - 5, top + 1, ["11111", "01110", "00100"], c["falling"])
 
     return img
