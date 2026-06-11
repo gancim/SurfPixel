@@ -166,6 +166,28 @@ if let i = CommandLine.arguments.firstIndex(of: "--preview"),
     exit(0)
 }
 
+// headless mode for docs: SurfPixel --settings-shot out.png
+if let i = CommandLine.arguments.firstIndex(of: "--settings-shot"),
+   i + 1 < CommandLine.arguments.count {
+    let path = CommandLine.arguments[i + 1]
+    _ = NSApplication.shared
+    NSApplication.shared.setActivationPolicy(.accessory)
+    let wc = SettingsWindowController()
+    wc.populate()
+    let window = wc.window!
+    let view = window.contentView!
+    window.setContentSize(view.fittingSize)
+    view.layoutSubtreeIfNeeded()
+    if let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) {
+        view.cacheDisplay(in: view.bounds, to: rep)
+        if let png = rep.representation(using: .png, properties: [:]) {
+            try? png.write(to: URL(fileURLWithPath: path))
+            print("saved \(path)")
+        }
+    }
+    exit(0)
+}
+
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate

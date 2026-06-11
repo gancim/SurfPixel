@@ -64,6 +64,10 @@ weather and surf coordinates, timezone, refresh interval, brightness, the
 good-period threshold, and a color well for every element on screen. Stored at
 `~/Library/Application Support/SurfPixel/config.json`.
 
+<p align="center">
+  <img src="assets/settings.png" width="400" alt="SurfPixel settings window with location, refresh and color options">
+</p>
+
 Requires macOS 13+ and Xcode command line tools to build.
 
 ## Python CLI
